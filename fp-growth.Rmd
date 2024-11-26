@@ -1,0 +1,147 @@
+---
+title: "FP-Growth"
+author: "Syahron Fitrahjon-Institut Teknologi Statistika dan Bisnis Muhammadiyah"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: flatly
+    higlight: zenburn
+    toc: true
+    toc_float:
+      collapsed: true
+    df_print: paged
+bibliography: references.bib
+---
+
+```{=html}
+<style>
+body{
+text-align: justify}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# PENGERTIAN
+FP-Growth adalah algoritma pencarian frequent itemsets yang didapat dari FP-tree. Algoritma FP-Growth merupakan pengembangan dari algoritma Apriori. Sehingga kekurangan dari algoritma Apriori diperbaiki di algoritma FP-Growth. Algoritma ini menenfukan frequent itemset yang berakhkan suffix tertentu dengan menggunakan metode devide and conquer untuk memecah problem menjadi subproblem yang lebih kecil. Jadi dapat disimpulkan bahwa FP-Growth adalah salah satu algoritma yang digunakan untuk mencari himpunan data yang sering muncul dari sekumpulan data, dengan menggunakan cara pembangktan stuktur data Tree.
+
+# TUJUAN PEMBELAJARAN
+Mahasiswa dapat menganalisis, menginterpretasikan data dan informasi serta mengambil keputusan yang tepat berdasarkan pendekatan analisis asosiasi (CPMK1, CPMK2, KUE, KKB). - Analisis afinitas - Algoritma Apriori di R Studio - Pertumbuhan FP di R Studio
+
+## Analisis Afinitas
+Analisis afinitas adalah studi tentang atribut atau karakteristik yang "berjalan bersama". Metode untuk analisis afinitas, juga dikenal sebagai analisis keranjang pasar, berusaha mengungkap asosiasi di antara atribut-atribut ini; yaitu, ia berusaha mengungkap aturan untuk mengukur hubungan antara dua atau lebih atribut. Aturan asosiasi mengambil bentuk "Jika anteseden, maka konsekuensinya", bersama dengan ukuran dukungan dan kepercayaan yang terkait dengan aturan tersebut.
+
+## Apriori dalam R Studio
+Apriori() menghasilkan seperangkat aturan yang paling relevan dari data transaksi tertentu. Ini juga menunjukkan dukungan, kepercayaan diri, dan pencabutan aturan tersebut. Ketiga ukuran ini dapat digunakan untuk memutuskan kekuatan relatif aturan. Jadi apa arti istilah-istilah ini?
+
+>
+Support $=\frac{\text { Number of transactions with both } A \text { and } B}{\text { Total number of transactions }}=P(A \cap B)$
+
+>
+Confidence $=\frac{\text { Number of transactions with both A and } B}{\text { Total number of transactions with } A}=\frac{P(A \cap B)}{P(A)}$
+
+>
+ExpectedCon fidence $=\frac{\text { Number of transactions with } B}{\text { Total number of transactions }}=P(B)$
+
+>
+Lift $=\frac{\text { Confidence }}{\text { Expected Confidence }}=\frac{P(A \cap B)}{P(A) \cdot P(B)}$
+
+# TAHAPAN
+## Algoritma dan Paket
+```{r}
+library(Matrix)
+library(arules)
+library(arulesViz)
+library(grid)
+data("Groceries")
+class(Groceries)
+inspect(head(Groceries, 3))
+```
+## Produk Paling Sering
+```{r}
+frequentItems <- eclat (Groceries, parameter = list(supp = 0.07, maxlen = 15)) #Menghitung dukungan untuk item yang sering
+```
+```{r}
+inspect(frequentItems)
+```
+```{r}
+itemFrequencyPlot(Groceries, topN=10, type="absolute", main="Item Frequency")
+```
+
+## Aturan Rekomendasi Produk
+```{r}
+rules <- apriori (Groceries, parameter = list(supp = 0.001, conf = 0.5)) #Minimal dukungan ialah 0.001, kepercayaan ialah 0.8
+```
+```{r}
+rules_conf <- sort (rules, by="confidence", decreasing=TRUE) #Aturan kepercayaan yang tinggi
+inspect(head(rules_conf)) #Menunjukkan dukungan,tingkatan dan kepercayaan untuk semua aturan
+```
+
+```{r}
+rules_lift <- sort (rules, by="lift", decreasing=TRUE) #Aturan tingkatan yang tinggi
+inspect(head(rules_lift)) #Menunjukkan dukungan, tingkatan dan kepercayaan untuk semua aturan
+```
+
+## Algoritma Apriori
+```{r eval=FALSE}
+Groceries <- apriori(txn, parameter = list(minlen=2, sup = 0.001, conf = 0.05, target="rules"))
+```
+
+### Total aturan yang dihasilkan
+```{r}
+summary(Groceries)
+```
+
+### Memeriksa aturan keranjang
+```{r}
+inspect(Groceries[1:20])
+```
+
+## Memvisualisasikan Aturan Asosiasi
+```{r}
+plot(Groceries, jitter = 0)
+```
+```{r}
+plot(Groceries, method = "grouped", control = list(k = 5))
+```
+
+### Grafik dari 20 aturan pertama
+```{r}
+plot(Groceries[1:20], method="graph")
+```
+
+### Grafik dari 50 aturan pertama
+```{r}
+plot(Groceries[1:50], method="graph")
+```
+
+### Plot koordinat paralel
+```{r}
+plot(Groceries[1:20], method="paracoord")
+```
+
+## Kontrol Jumlah Aturan di Output
+```{r}
+rules <- apriori(Groceries, parameter = list (supp = 0.001, conf = 0.2, maxlen=3)) #maxlen=3, membatasi elemen dalam aturan menjadi 3
+```
+```{r}
+summary(rules)
+```
+```{r}
+inspect(head(sort(rules, by ="lift"),5)) #Periksa 5 aturan teratas dengan tingkatan tertinggi
+```
+```{r}
+plot(rules)
+```
+```{r}
+plot(rules , shading="order", control=list(main="two-key plot"))
+```
+```{r}
+RulesBev1 <- subset(rules, subset = rhs %ain% "soda")
+summary(RulesBev1)
+```
+```{r}
+inspect(head(sort(RulesBev1, by ="lift"),5))
+```
+
